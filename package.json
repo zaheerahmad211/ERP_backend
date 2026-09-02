@@ -2,7 +2,7 @@
   "name": "erp-backend",
   "version": "1.0.0",
   "description": "Enterprise Resource Planning (ERP) System Backend API",
-  "main": "server.js",
+  "main": "api/index.js",
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
