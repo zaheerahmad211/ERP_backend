@@ -1,4 +1,3 @@
-```js
 const path = require("path");
 const express = require("express");
 const dotenv = require("dotenv");
@@ -11,7 +10,7 @@ dotenv.config();
 const app = express();
 
 // =====================================================
-// Security
+// SECURITY
 // =====================================================
 
 app.use(
@@ -21,38 +20,45 @@ app.use(
 );
 
 // =====================================================
-// CORS
+// CORS CONFIGURATION
 // =====================================================
 
 const allowedOrigins = [
-  // Production frontend
-  "https://erp-frontend-659b8b5ut-zaheers-projects-7e59edf9.vercel.app",
-
-  // Optional environment-based frontend URL
-  process.env.CLIENT_URL,
-
   // Local development
   "http://localhost:5173",
   "http://127.0.0.1:5173",
+
+  // Vercel production frontend
+  "https://erp-frontend-659b8b5ut-zaheers-projects-7e59edf9.vercel.app",
+
+  // Environment variable frontend URL
+  process.env.CLIENT_URL,
 ].filter(Boolean);
+
+console.log("Allowed CORS origins:", allowedOrigins);
+
+// =====================================================
+// CORS
+// =====================================================
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests without an Origin header
-      // (Postman, server-to-server requests, etc.)
+      // Allow requests without Origin
+      // Example: Postman, Thunder Client, server-to-server
       if (!origin) {
         return callback(null, true);
       }
 
+      // Allow registered frontend
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
-      console.error(`CORS blocked: ${origin}`);
+      console.log("CORS blocked:", origin);
 
       return callback(
-        new Error(`CORS blocked for origin: ${origin}`)
+        new Error(`Not allowed by CORS: ${origin}`)
       );
     },
 
@@ -70,6 +76,9 @@ app.use(
     allowedHeaders: [
       "Content-Type",
       "Authorization",
+      "Accept",
+      "Origin",
+      "X-Requested-With",
     ],
 
     optionsSuccessStatus: 204,
@@ -77,13 +86,7 @@ app.use(
 );
 
 // =====================================================
-// Explicit OPTIONS / Preflight Handling
-// =====================================================
-
-app.options("*", cors());
-
-// =====================================================
-// Body Parser
+// BODY PARSER
 // =====================================================
 
 app.use(
@@ -100,7 +103,7 @@ app.use(
 );
 
 // =====================================================
-// Logging
+// LOGGING
 // =====================================================
 
 if (process.env.NODE_ENV !== "production") {
@@ -108,7 +111,7 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 // =====================================================
-// Static Files
+// STATIC FILES
 // =====================================================
 
 app.use(
@@ -117,7 +120,7 @@ app.use(
 );
 
 // =====================================================
-// Root Route
+// ROOT ROUTE
 // =====================================================
 
 app.get("/", (req, res) => {
@@ -130,7 +133,7 @@ app.get("/", (req, res) => {
 });
 
 // =====================================================
-// Health Check
+// HEALTH CHECK
 // =====================================================
 
 app.get("/api/health", (req, res) => {
@@ -143,7 +146,7 @@ app.get("/api/health", (req, res) => {
 });
 
 // =====================================================
-// API Routes
+// API ROUTES
 // =====================================================
 
 app.use(
@@ -202,7 +205,7 @@ app.use(
 );
 
 // =====================================================
-// 404 Handler
+// 404 HANDLER
 // =====================================================
 
 const {
@@ -213,14 +216,13 @@ const {
 app.use(notFound);
 
 // =====================================================
-// Global Error Handler
+// GLOBAL ERROR HANDLER
 // =====================================================
 
 app.use(errorHandler);
 
 // =====================================================
-// Export Express App
+// EXPORT APP
 // =====================================================
 
 module.exports = app;
-```
