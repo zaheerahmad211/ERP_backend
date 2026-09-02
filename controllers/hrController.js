@@ -224,8 +224,17 @@ const getAttendance = async (req, res, next) => {
 const markAttendance = async (req, res, next) => {
   try {
     const { employeeId, date, checkIn, checkOut, status, workingHours, remarks } = req.body;
-    const recordDate = date ? new Date(date) : new Date();
 
+    if (!employeeId) {
+      return errorResponse(res, 'Please select an employee before recording attendance.', [], 400);
+    }
+
+    const employee = await Employee.findById(employeeId);
+    if (!employee) {
+      return errorResponse(res, 'Selected employee was not found.', [], 404);
+    }
+
+    const recordDate = date ? new Date(date) : new Date();
     const startOfDay = new Date(recordDate.setHours(0, 0, 0, 0));
     const endOfDay = new Date(recordDate.setHours(23, 59, 59, 999));
 
@@ -248,8 +257,8 @@ const markAttendance = async (req, res, next) => {
         checkIn: checkIn || '09:00 AM',
         checkOut: checkOut || '05:00 PM',
         status: status || 'Present',
-        workingHours: workingHours || 8,
-        remarks,
+        workingHours: workingHours !== undefined ? workingHours : 8,
+        remarks: remarks || '',
       });
     }
 
