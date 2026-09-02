@@ -1,3 +1,4 @@
+```js
 const path = require("path");
 const express = require("express");
 const dotenv = require("dotenv");
@@ -9,9 +10,9 @@ dotenv.config();
 
 const app = express();
 
-// ===============================
+// =====================================================
 // Security
-// ===============================
+// =====================================================
 
 app.use(
   helmet({
@@ -19,19 +20,27 @@ app.use(
   })
 );
 
-// ===============================
+// =====================================================
 // CORS
-// ===============================
+// =====================================================
 
 const allowedOrigins = [
+  // Production frontend
+  "https://erp-frontend-659b8b5ut-zaheers-projects-7e59edf9.vercel.app",
+
+  // Optional environment-based frontend URL
   process.env.CLIENT_URL,
+
+  // Local development
   "http://localhost:5173",
+  "http://127.0.0.1:5173",
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow Postman, server-to-server requests, etc.
+      // Allow requests without an Origin header
+      // (Postman, server-to-server requests, etc.)
       if (!origin) {
         return callback(null, true);
       }
@@ -46,17 +55,42 @@ app.use(
         new Error(`CORS blocked for origin: ${origin}`)
       );
     },
+
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
+
+    optionsSuccessStatus: 204,
   })
 );
 
-// ===============================
-// Body Parser
-// ===============================
+// =====================================================
+// Explicit OPTIONS / Preflight Handling
+// =====================================================
 
-app.use(express.json({ limit: "10mb" }));
+app.options("*", cors());
+
+// =====================================================
+// Body Parser
+// =====================================================
+
+app.use(
+  express.json({
+    limit: "10mb",
+  })
+);
 
 app.use(
   express.urlencoded({
@@ -65,26 +99,26 @@ app.use(
   })
 );
 
-// ===============================
+// =====================================================
 // Logging
-// ===============================
+// =====================================================
 
 if (process.env.NODE_ENV !== "production") {
   app.use(morgan("dev"));
 }
 
-// ===============================
+// =====================================================
 // Static Files
-// ===============================
+// =====================================================
 
 app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"))
 );
 
-// ===============================
+// =====================================================
 // Root Route
-// ===============================
+// =====================================================
 
 app.get("/", (req, res) => {
   res.status(200).json({
@@ -95,9 +129,9 @@ app.get("/", (req, res) => {
   });
 });
 
-// ===============================
+// =====================================================
 // Health Check
-// ===============================
+// =====================================================
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({
@@ -108,28 +142,68 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// ===============================
+// =====================================================
 // API Routes
-// ===============================
+// =====================================================
 
-app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/users", require("./routes/userRoutes"));
-app.use("/api/hr", require("./routes/hrRoutes"));
-app.use("/api/products", require("./routes/productRoutes"));
-app.use("/api/purchasing", require("./routes/purchasingRoutes"));
-app.use("/api/sales", require("./routes/salesRoutes"));
-app.use("/api/finance", require("./routes/financeRoutes"));
+app.use(
+  "/api/auth",
+  require("./routes/authRoutes")
+);
+
+app.use(
+  "/api/users",
+  require("./routes/userRoutes")
+);
+
+app.use(
+  "/api/hr",
+  require("./routes/hrRoutes")
+);
+
+app.use(
+  "/api/products",
+  require("./routes/productRoutes")
+);
+
+app.use(
+  "/api/purchasing",
+  require("./routes/purchasingRoutes")
+);
+
+app.use(
+  "/api/sales",
+  require("./routes/salesRoutes")
+);
+
+app.use(
+  "/api/finance",
+  require("./routes/financeRoutes")
+);
+
 app.use(
   "/api/manufacturing",
   require("./routes/manufacturingRoutes")
 );
-app.use("/api/projects", require("./routes/projectRoutes"));
-app.use("/api/assets", require("./routes/assetRoutes"));
-app.use("/api/system", require("./routes/systemRoutes"));
 
-// ===============================
-// Error Handling
-// ===============================
+app.use(
+  "/api/projects",
+  require("./routes/projectRoutes")
+);
+
+app.use(
+  "/api/assets",
+  require("./routes/assetRoutes")
+);
+
+app.use(
+  "/api/system",
+  require("./routes/systemRoutes")
+);
+
+// =====================================================
+// 404 Handler
+// =====================================================
 
 const {
   notFound,
@@ -137,10 +211,16 @@ const {
 } = require("./middleware/errorMiddleware");
 
 app.use(notFound);
+
+// =====================================================
+// Global Error Handler
+// =====================================================
+
 app.use(errorHandler);
 
-// ===============================
-// Export App
-// ===============================
+// =====================================================
+// Export Express App
+// =====================================================
 
 module.exports = app;
+```
