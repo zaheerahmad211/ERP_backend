@@ -10,33 +10,6 @@ dotenv.config();
 const app = express();
 
 // =====================================================
-// SECURITY
-// =====================================================
-
-app.use(
-  helmet({
-    contentSecurityPolicy: false,
-  })
-);
-
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Vary", "Origin");
-  }
-
-  if (req.method === "OPTIONS") {
-    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization,Accept,Origin,X-Requested-With");
-    return res.sendStatus(204);
-  }
-
-  next();
-});
-
-// =====================================================
 // CORS CONFIGURATION
 // =====================================================
 
@@ -48,17 +21,30 @@ const allowedOrigins = [
   // Current Vercel frontend
   "https://erp-frontend-5v4zppz8w-zaheers-projects-7e59edf9.vercel.app",
 
-  // Previous Vercel frontend URL
+  // Previous Vercel frontend
   "https://erp-frontend-659b8b5ut-zaheers-projects-7e59edf9.vercel.app",
 
-  // Main frontend URL, if deployed
+  // Main Vercel frontend
   "https://erp-frontend-jade-alpha.vercel.app",
 
   // Environment variable
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
-console.log("Allowed CORS origins:", allowedOrigins);
+console.log(
+  "[CORS] Allowed origins:",
+  allowedOrigins
+);
+
+// =====================================================
+// SECURITY
+// =====================================================
+
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+  })
+);
 
 // =====================================================
 // CORS
@@ -66,8 +52,8 @@ console.log("Allowed CORS origins:", allowedOrigins);
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests without an Origin
-    // Postman, Thunder Client, server-to-server
+    // Requests without Origin
+    // Postman / Thunder Client / server-to-server
     if (!origin) {
       return callback(null, true);
     }
@@ -76,9 +62,11 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    console.log("CORS blocked:", origin);
+    console.log("[CORS] Blocked origin:", origin);
 
-    return callback(new Error(`Not allowed by CORS: ${origin}`));
+    return callback(
+      new Error(`Not allowed by CORS: ${origin}`)
+    );
   },
 
   credentials: true,
@@ -105,8 +93,11 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Explicitly handle preflight requests
-app.options("*", cors(corsOptions));
+// IMPORTANT:
+// Do NOT add:
+// app.options("*", cors(corsOptions));
+//
+// The cors middleware above handles preflight requests.
 
 // =====================================================
 // BODY PARSER
@@ -139,7 +130,9 @@ if (process.env.NODE_ENV !== "production") {
 
 app.use(
   "/uploads",
-  express.static(path.join(__dirname, "uploads"))
+  express.static(
+    path.join(__dirname, "uploads")
+  )
 );
 
 // =====================================================
@@ -151,7 +144,8 @@ app.get("/", (req, res) => {
     success: true,
     message: "MERN ERP System Backend is running",
     version: "1.0.0",
-    environment: process.env.NODE_ENV || "development",
+    environment:
+      process.env.NODE_ENV || "development",
   });
 });
 
@@ -232,6 +226,9 @@ app.use(
   require("./routes/systemRoutes")
 );
 
+// =====================================================
+// 404 HANDLER
+// =====================================================
 
 const {
   notFound,
@@ -247,7 +244,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 // =====================================================
-// EXPORT APP
+// EXPORT
 // =====================================================
 
 module.exports = app;

@@ -21,14 +21,6 @@ const monthBounds = (value = new Date()) => {
   };
 };
 
-const getWeekendDates = (start, end) => {
-  const weekends = [];
-  for (const date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-    if ([0, 6].includes(date.getDay())) weekends.push(new Date(date));
-  }
-  return weekends;
-};
-
 const getEmployeeDashboard = async (req, res, next) => {
   try {
     const employee = await getEmployee(req);
@@ -57,7 +49,6 @@ const getEmployeeDashboard = async (req, res, next) => {
       monthAttendance,
       summary: { workedDays, absentDays, leaveBalance, pendingLeaves },
       announcements,
-      weekends: getWeekendDates(month.start, month.end),
       holidays: [],
     });
   } catch (error) {
