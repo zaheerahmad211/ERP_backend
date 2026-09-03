@@ -6,6 +6,7 @@ const { successResponse, errorResponse } = require('../utils/apiResponse');
 const { logAudit } = require('../middleware/auditLogger');
 const upload = require('../middleware/upload');
 const crypto = require('crypto');
+const sendEmail = require('../utils/sendEmail');
 
 const ensureEmployeeProfile = async (user) => {
   if (user.role !== 'Employee') return null;
@@ -229,11 +230,21 @@ const forgotPassword = async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password/${rawToken}`;
+    const hasEmailConfig = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS'].every((key) => process.env[key]);
+    if (hasEmailConfig) {
+      await sendEmail({
+        to: user.email,
+        subject: 'Reset your ERP password',
+        text: `Use this link to reset your ERP password. It expires in 15 minutes: ${resetUrl}`,
+        html: `<p>Use the link below to reset your ERP password. It expires in 15 minutes.</p><p><a href="${resetUrl}">Reset password</a></p>`,
+      });
+    } else if (process.env.NODE_ENV === 'production') {
+      return errorResponse(res, 'Password reset email service is not configured. Please contact an administrator.', [], 503);
+    }
+
     if (process.env.NODE_ENV !== 'production') {
       return successResponse(res, genericResponse, { resetUrl });
     }
-
-    console.warn(`[Password Reset] Configure an email provider to deliver: ${resetUrl}`);
     return successResponse(res, genericResponse);
   } catch (error) {
     next(error);
