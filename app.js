@@ -28,10 +28,16 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
 
-  // Vercel production frontend
+  // Current Vercel frontend
+  "https://erp-frontend-5v4zppz8w-zaheers-projects-7e59edf9.vercel.app",
+
+  // Previous Vercel frontend URL
   "https://erp-frontend-659b8b5ut-zaheers-projects-7e59edf9.vercel.app",
 
-  // Environment variable frontend URL
+  // Main frontend URL, if deployed
+  "https://erp-frontend-jade-alpha.vercel.app",
+
+  // Environment variable
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
@@ -41,49 +47,49 @@ console.log("Allowed CORS origins:", allowedOrigins);
 // CORS
 // =====================================================
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests without Origin
-      // Example: Postman, Thunder Client, server-to-server
-      if (!origin) {
-        return callback(null, true);
-      }
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests without an Origin
+    // Postman, Thunder Client, server-to-server
+    if (!origin) {
+      return callback(null, true);
+    }
 
-      // Allow registered frontend
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-      console.log("CORS blocked:", origin);
+    console.log("CORS blocked:", origin);
 
-      return callback(
-        new Error(`Not allowed by CORS: ${origin}`)
-      );
-    },
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
+  },
 
-    credentials: true,
+  credentials: true,
 
-    methods: [
-      "GET",
-      "POST",
-      "PUT",
-      "PATCH",
-      "DELETE",
-      "OPTIONS",
-    ],
+  methods: [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+  ],
 
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "Accept",
-      "Origin",
-      "X-Requested-With",
-    ],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Accept",
+    "Origin",
+    "X-Requested-With",
+  ],
 
-    optionsSuccessStatus: 204,
-  })
-);
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
+
+// Explicitly handle preflight requests
+app.options("*", cors(corsOptions));
 
 // =====================================================
 // BODY PARSER
