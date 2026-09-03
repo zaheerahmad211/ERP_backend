@@ -219,7 +219,8 @@ const getAttendance = async (req, res, next) => {
     if (employeeId) query.employee = employeeId;
 
     const records = await Attendance.find(query).populate({ path: 'employee', select: 'firstName lastName employeeId designation profilePhoto', populate: { path: 'user', select: 'name avatar' } });
-    return successResponse(res, 'Attendance records retrieved', records);
+    const validRecords = records.filter((record) => record.employee?.employeeId);
+    return successResponse(res, 'Attendance records retrieved', validRecords);
   } catch (error) {
     next(error);
   }
@@ -287,8 +288,9 @@ const getLeaves = async (req, res, next) => {
       .populate({ path: 'employee', select: 'firstName lastName employeeId designation profilePhoto', populate: { path: 'user', select: 'name avatar' } })
       .populate('approvedBy', 'name')
       .sort({ createdAt: -1 });
+    const validLeaves = leaves.filter((leave) => leave.employee?.employeeId);
 
-    return successResponse(res, 'Leave applications retrieved', leaves);
+    return successResponse(res, 'Leave applications retrieved', validLeaves);
   } catch (error) {
     next(error);
   }
