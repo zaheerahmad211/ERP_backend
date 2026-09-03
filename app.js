@@ -1,4 +1,3 @@
-const path = require("path");
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
@@ -31,10 +30,7 @@ const allowedOrigins = [
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
-console.log(
-  "[CORS] Allowed origins:",
-  allowedOrigins
-);
+console.log("[CORS] Allowed origins:", allowedOrigins);
 
 // =====================================================
 // SECURITY
@@ -52,7 +48,6 @@ app.use(
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Requests without Origin
     // Postman / Thunder Client / server-to-server
     if (!origin) {
       return callback(null, true);
@@ -93,12 +88,6 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// IMPORTANT:
-// Do NOT add:
-// app.options("*", cors(corsOptions));
-//
-// The cors middleware above handles preflight requests.
-
 // =====================================================
 // BODY PARSER
 // =====================================================
@@ -123,17 +112,6 @@ app.use(
 if (process.env.NODE_ENV !== "production") {
   app.use(morgan("dev"));
 }
-
-// =====================================================
-// STATIC FILES
-// =====================================================
-
-app.use(
-  "/uploads",
-  express.static(
-    path.join(__dirname, "uploads")
-  )
-);
 
 // =====================================================
 // ROOT ROUTE
