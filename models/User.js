@@ -65,6 +65,14 @@ const userSchema = new mongoose.Schema(
       ref: 'Company',
       default: null,
     },
+    resetPasswordToken: {
+      type: String,
+      select: false,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      select: false,
+    },
   },
   {
     timestamps: true,

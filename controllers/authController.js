@@ -5,6 +5,7 @@ const generateToken = require('../utils/generateToken');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
 const { logAudit } = require('../middleware/auditLogger');
 const upload = require('../middleware/upload');
+const crypto = require('crypto');
 
 const ensureEmployeeProfile = async (user) => {
   if (user.role !== 'Employee') return null;
@@ -213,6 +214,52 @@ const changePassword = async (req, res, next) => {
   }
 };
 
+const forgotPassword = async (req, res, next) => {
+  try {
+    const email = req.body.email?.trim().toLowerCase();
+    const genericResponse = 'If an account exists for that email, password reset instructions have been prepared.';
+    if (!email) return errorResponse(res, 'Please provide your email address.', [], 400);
+
+    const user = await User.findOne({ email });
+    if (!user) return successResponse(res, genericResponse);
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
+    await user.save({ validateBeforeSave: false });
+
+    const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password/${rawToken}`;
+    if (process.env.NODE_ENV !== 'production') {
+      return successResponse(res, genericResponse, { resetUrl });
+    }
+
+    console.warn(`[Password Reset] Configure an email provider to deliver: ${resetUrl}`);
+    return successResponse(res, genericResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() },
+    }).select('+resetPasswordToken +resetPasswordExpires');
+    if (!user) return errorResponse(res, 'Reset link is invalid or expired.', [], 400);
+    if (!req.body.password || req.body.password.length < 6) return errorResponse(res, 'Password must be at least 6 characters.', [], 400);
+
+    user.password = req.body.password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+    return successResponse(res, 'Password reset successfully. You can now sign in.');
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -222,4 +269,6 @@ module.exports = {
   ensureEmployeeProfile,
   uploadAvatar,
   avatarUploadMiddleware: upload.single('avatar'),
+  forgotPassword,
+  resetPassword,
 };
