@@ -367,8 +367,9 @@ const getPayrolls = async (req, res, next) => {
         populate: { path: 'user', select: 'name avatar' },
       })
       .sort({ year: -1, month: -1 });
+    const validPayrolls = payrolls.filter((payroll) => payroll.employee?.employeeId);
 
-    return successResponse(res, 'Payroll records retrieved', payrolls);
+    return successResponse(res, 'Payroll records retrieved', validPayrolls);
   } catch (error) {
     next(error);
   }
