@@ -82,7 +82,7 @@ const createProduct = async (req, res, next) => {
       sku: sku.toUpperCase(),
       name,
       description,
-      category,
+      category: category || null,
       brand,
       unit,
       purchasePrice,
@@ -90,7 +90,7 @@ const createProduct = async (req, res, next) => {
       taxRate,
       stockQuantity: stockQuantity || 0,
       minimumStock: minimumStock || 10,
-      warehouse,
+      warehouse: warehouse || null,
       image,
     });
 
@@ -127,7 +127,11 @@ const updateProduct = async (req, res, next) => {
     const product = await Product.findById(req.params.id);
     if (!product) return errorResponse(res, 'Product not found', [], 404);
 
-    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, {
+    const updateData = { ...req.body };
+    if (updateData.category === '') updateData.category = null;
+    if (updateData.warehouse === '') updateData.warehouse = null;
+
+    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
     })
