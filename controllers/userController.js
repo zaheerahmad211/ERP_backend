@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const Employee = require('../models/Employee');
+const { ensureEmployeeProfile } = require('./authController');
 const Role = require('../models/Role');
 const { successResponse, errorResponse, paginateResponse } = require('../utils/apiResponse');
 const { logAudit } = require('../middleware/auditLogger');
@@ -68,6 +70,8 @@ const createUser = async (req, res, next) => {
       status: status || 'Active',
     });
 
+    await ensureEmployeeProfile(user);
+
     await logAudit({
       req,
       action: 'CREATE',
@@ -97,8 +101,14 @@ const updateUser = async (req, res, next) => {
     user.role = req.body.role || user.role;
     user.status = req.body.status || user.status;
     if (req.body.permissions) user.permissions = req.body.permissions;
+    if (req.body.avatar !== undefined) user.avatar = req.body.avatar;
 
     const updatedUser = await user.save();
+    if (updatedUser.role === 'Employee') {
+      await ensureEmployeeProfile(updatedUser);
+    } else {
+      await Employee.updateOne({ user: updatedUser._id }, { profilePhoto: updatedUser.avatar });
+    }
 
     await logAudit({
       req,

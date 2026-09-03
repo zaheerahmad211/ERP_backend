@@ -4,6 +4,7 @@ const Department = require('../models/Department');
 const generateToken = require('../utils/generateToken');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
 const { logAudit } = require('../middleware/auditLogger');
+const upload = require('../middleware/upload');
 
 const ensureEmployeeProfile = async (user) => {
   if (user.role !== 'Employee') return null;
@@ -169,14 +170,23 @@ const updateProfile = async (req, res, next) => {
     if (req.body.avatar) user.avatar = req.body.avatar;
 
     const updatedUser = await user.save();
-    if (updatedUser.role === 'Employee') {
-      await Employee.findOneAndUpdate(
-        { user: updatedUser._id },
-        { profilePhoto: updatedUser.avatar },
-        { new: true }
-      );
-    }
+    await Employee.findOneAndUpdate({ user: updatedUser._id }, { profilePhoto: updatedUser.avatar });
     return successResponse(res, 'Profile updated successfully', updatedUser);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const uploadAvatar = async (req, res, next) => {
+  try {
+    if (!req.file) return errorResponse(res, 'Please select an image file', [], 400);
+    const user = await User.findById(req.user._id);
+    if (!user) return errorResponse(res, 'User not found', [], 404);
+
+    user.avatar = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    const updatedUser = await user.save();
+    await Employee.findOneAndUpdate({ user: updatedUser._id }, { profilePhoto: updatedUser.avatar });
+    return successResponse(res, 'Profile picture uploaded successfully', updatedUser);
   } catch (error) {
     next(error);
   }
@@ -209,4 +219,7 @@ module.exports = {
   getMe,
   updateProfile,
   changePassword,
+  ensureEmployeeProfile,
+  uploadAvatar,
+  avatarUploadMiddleware: upload.single('avatar'),
 };

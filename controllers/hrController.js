@@ -6,12 +6,14 @@ const Payroll = require('../models/Payroll');
 const User = require('../models/User');
 const { successResponse, errorResponse, paginateResponse } = require('../utils/apiResponse');
 const { logAudit } = require('../middleware/auditLogger');
+const syncEmployeeUserLinks = require('../utils/syncEmployeeUsers');
 
 // ==========================================
 // EMPLOYEES
 // ==========================================
 const getEmployees = async (req, res, next) => {
   try {
+    await syncEmployeeUserLinks();
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     const skip = (page - 1) * limit;
@@ -205,6 +207,7 @@ const deleteDepartment = async (req, res, next) => {
 // ==========================================
 const getAttendance = async (req, res, next) => {
   try {
+    await syncEmployeeUserLinks();
     const { date, employeeId } = req.query;
     const query = {};
     if (date) {
@@ -215,7 +218,7 @@ const getAttendance = async (req, res, next) => {
     }
     if (employeeId) query.employee = employeeId;
 
-    const records = await Attendance.find(query).populate('employee', 'firstName lastName employeeId designation');
+    const records = await Attendance.find(query).populate({ path: 'employee', select: 'firstName lastName employeeId designation profilePhoto', populate: { path: 'user', select: 'name avatar' } });
     return successResponse(res, 'Attendance records retrieved', records);
   } catch (error) {
     next(error);
@@ -274,13 +277,14 @@ const markAttendance = async (req, res, next) => {
 // ==========================================
 const getLeaves = async (req, res, next) => {
   try {
+    await syncEmployeeUserLinks();
     const { status, employeeId } = req.query;
     const query = {};
     if (status) query.status = status;
     if (employeeId) query.employee = employeeId;
 
     const leaves = await Leave.find(query)
-      .populate('employee', 'firstName lastName employeeId designation')
+      .populate({ path: 'employee', select: 'firstName lastName employeeId designation profilePhoto', populate: { path: 'user', select: 'name avatar' } })
       .populate('approvedBy', 'name')
       .sort({ createdAt: -1 });
 
@@ -346,6 +350,7 @@ const updateLeaveStatus = async (req, res, next) => {
 // ==========================================
 const getPayrolls = async (req, res, next) => {
   try {
+    await syncEmployeeUserLinks();
     const { month, year, employeeId, status } = req.query;
     const query = {};
     if (month) query.month = parseInt(month, 10);
@@ -356,8 +361,8 @@ const getPayrolls = async (req, res, next) => {
     const payrolls = await Payroll.find(query)
       .populate({
         path: 'employee',
-        select: 'firstName lastName employeeId designation bankInfo',
-        populate: { path: 'department', select: 'name' },
+        select: 'firstName lastName employeeId designation bankInfo profilePhoto',
+        populate: { path: 'user', select: 'name avatar' },
       })
       .sort({ year: -1, month: -1 });
 
@@ -406,7 +411,7 @@ const generatePayroll = async (req, res, next) => {
         paymentDate: new Date(),
       },
       { upsert: true, new: true }
-    ).populate('employee', 'firstName lastName employeeId designation');
+    ).populate({ path: 'employee', select: 'firstName lastName employeeId designation profilePhoto', populate: { path: 'user', select: 'name avatar' } });
 
     await logAudit({
       req,

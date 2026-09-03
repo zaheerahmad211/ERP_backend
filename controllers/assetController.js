@@ -1,14 +1,16 @@
 const Asset = require('../models/Asset');
 const Maintenance = require('../models/Maintenance');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
+const syncEmployeeUserLinks = require('../utils/syncEmployeeUsers');
 
 // ==========================================
 // ASSETS
 // ==========================================
 const getAssets = async (req, res, next) => {
   try {
+    await syncEmployeeUserLinks();
     const assets = await Asset.find()
-      .populate('assignedEmployee', 'firstName lastName designation')
+      .populate({ path: 'assignedEmployee', select: 'firstName lastName designation profilePhoto', populate: { path: 'user', select: 'name avatar' } })
       .sort({ createdAt: -1 });
 
     return successResponse(res, 'Assets list retrieved', assets);

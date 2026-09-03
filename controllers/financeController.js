@@ -8,6 +8,7 @@ const Customer = require('../models/Customer');
 const Supplier = require('../models/Supplier');
 const { successResponse, errorResponse, paginateResponse } = require('../utils/apiResponse');
 const { logAudit } = require('../middleware/auditLogger');
+const syncEmployeeUserLinks = require('../utils/syncEmployeeUsers');
 
 // ==========================================
 // INVOICES
@@ -200,8 +201,9 @@ const recordPayment = async (req, res, next) => {
 // ==========================================
 const getExpenses = async (req, res, next) => {
   try {
+    await syncEmployeeUserLinks();
     const expenses = await Expense.find()
-      .populate('employee', 'firstName lastName')
+      .populate({ path: 'employee', select: 'firstName lastName profilePhoto', populate: { path: 'user', select: 'name avatar' } })
       .populate('department', 'name')
       .sort({ createdAt: -1 });
 
