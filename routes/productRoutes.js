@@ -22,12 +22,12 @@ router.use(protect);
 // Products
 router.route('/products')
   .get(getProducts)
-  .post(authorize('Super Admin', 'Admin', 'Inventory Manager', 'Purchase Manager'), createProduct);
+  .post(authorize('Super Admin', 'Admin', 'Product Admin', 'Inventory Manager', 'Purchase Manager'), createProduct);
 
 router.route('/products/:id')
   .get(getProductById)
-  .put(authorize('Super Admin', 'Admin', 'Inventory Manager'), updateProduct)
-  .delete(authorize('Super Admin', 'Admin', 'Inventory Manager'), deleteProduct);
+  .put(authorize('Super Admin', 'Admin', 'Product Admin', 'Inventory Manager'), updateProduct)
+  .delete(authorize('Super Admin', 'Admin', 'Product Admin', 'Inventory Manager'), deleteProduct);
 
 // Categories
 router.route('/categories')

@@ -73,14 +73,20 @@ const createProduct = async (req, res, next) => {
       image,
     } = req.body;
 
-    const existingSKU = await Product.findOne({ sku: sku.toUpperCase() });
+    if (!name?.trim()) return errorResponse(res, 'Product name is required.', [], 400);
+    if (purchasePrice === undefined || purchasePrice === '') return errorResponse(res, 'Purchase price is required.', [], 400);
+    if (sellingPrice === undefined || sellingPrice === '') return errorResponse(res, 'Selling price is required.', [], 400);
+    if (Number(purchasePrice) < 0 || Number(sellingPrice) < 0) return errorResponse(res, 'Prices cannot be negative.', [], 400);
+
+    const normalizedSKU = (sku || `SKU-${Date.now().toString().slice(-6)}`).trim().toUpperCase();
+    const existingSKU = await Product.findOne({ sku: normalizedSKU });
     if (existingSKU) {
-      return errorResponse(res, `Product SKU '${sku}' already exists`, [], 400);
+      return errorResponse(res, `Product SKU '${normalizedSKU}' already exists`, [], 400);
     }
 
     const product = await Product.create({
-      sku: sku.toUpperCase(),
-      name,
+      sku: normalizedSKU,
+      name: name?.trim(),
       description,
       category: category || null,
       brand,
@@ -88,8 +94,8 @@ const createProduct = async (req, res, next) => {
       purchasePrice,
       sellingPrice,
       taxRate,
-      stockQuantity: stockQuantity || 0,
-      minimumStock: minimumStock || 10,
+      stockQuantity: stockQuantity !== undefined && stockQuantity !== '' ? Number(stockQuantity) : 0,
+      minimumStock: minimumStock !== undefined && minimumStock !== '' ? Number(minimumStock) : 10,
       warehouse: warehouse || null,
       image,
     });

@@ -39,6 +39,7 @@ const userSchema = new mongoose.Schema(
         'Sales Manager',
         'Sales Employee',
         'Inventory Manager',
+        'Product Admin',
         'Purchase Manager',
         'Production Manager',
         'Project Manager',
