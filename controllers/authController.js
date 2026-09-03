@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const Employee = require('../models/Employee');
+const Department = require('../models/Department');
 const generateToken = require('../utils/generateToken');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
 const { logAudit } = require('../middleware/auditLogger');
@@ -8,7 +10,7 @@ const { logAudit } = require('../middleware/auditLogger');
 // @access  Public / Admin
 const register = async (req, res, next) => {
   try {
-    const { name, email, password, phone, role } = req.body;
+    const { name, email, password, phone } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) {
@@ -20,8 +22,31 @@ const register = async (req, res, next) => {
       email,
       password,
       phone,
-      role: role || 'Employee',
+      role: 'Employee',
     });
+
+    if (user.role === 'Employee') {
+      const nameParts = name.trim().split(/\s+/);
+      const firstName = nameParts.shift() || name;
+      const lastName = nameParts.join(' ') || firstName;
+      const department = await Department.findOneAndUpdate(
+        { code: 'GEN' },
+        { name: 'General', code: 'GEN', description: 'Default employee department' },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+
+      await Employee.create({
+        employeeId: `EMP-${user._id.toString().slice(-6).toUpperCase()}`,
+        user: user._id,
+        firstName,
+        lastName,
+        email: user.email,
+        phone: phone || '',
+        department: department._id,
+        designation: 'Employee',
+        salary: 0,
+      });
+    }
 
     const token = generateToken(user._id, user.role);
 

@@ -26,17 +26,17 @@ router.use(protect);
 
 // Employees
 router.route('/employees')
-  .get(getEmployees)
+  .get(authorize('Super Admin', 'Admin', 'HR Manager'), getEmployees)
   .post(authorize('Super Admin', 'Admin', 'HR Manager'), createEmployee);
 
 router.route('/employees/:id')
-  .get(getEmployeeById)
+  .get(authorize('Super Admin', 'Admin', 'HR Manager'), getEmployeeById)
   .put(authorize('Super Admin', 'Admin', 'HR Manager'), updateEmployee)
   .delete(authorize('Super Admin', 'Admin', 'HR Manager'), deleteEmployee);
 
 // Departments
 router.route('/departments')
-  .get(getDepartments)
+  .get(authorize('Super Admin', 'Admin', 'HR Manager'), getDepartments)
   .post(authorize('Super Admin', 'Admin', 'HR Manager'), createDepartment);
 
 router.route('/departments/:id')
@@ -45,13 +45,13 @@ router.route('/departments/:id')
 
 // Attendance
 router.route('/attendance')
-  .get(getAttendance)
-  .post(markAttendance);
+  .get(authorize('Super Admin', 'Admin', 'HR Manager'), getAttendance)
+  .post(authorize('Super Admin', 'Admin', 'HR Manager'), markAttendance);
 
 // Leave
 router.route('/leave')
-  .get(getLeaves)
-  .post(applyLeave);
+  .get(authorize('Super Admin', 'Admin', 'HR Manager'), getLeaves)
+  .post(authorize('Super Admin', 'Admin', 'HR Manager'), applyLeave);
 
 router.put('/leave/:id/status', authorize('Super Admin', 'Admin', 'HR Manager'), updateLeaveStatus);
 

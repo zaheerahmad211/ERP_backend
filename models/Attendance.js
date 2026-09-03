@@ -32,6 +32,23 @@ const attendanceSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    correctionRequest: {
+      type: String,
+      default: '',
+    },
+    correctionStatus: {
+      type: String,
+      enum: ['None', 'Pending', 'Approved', 'Rejected'],
+      default: 'None',
+    },
+    correctionRequestedAt: {
+      type: Date,
+      default: null,
+    },
+    correctionRemarks: {
+      type: String,
+      default: '',
+    },
   },
   { timestamps: true }
 );

@@ -14,14 +14,14 @@ const { authorize } = require('../middleware/roleMiddleware');
 
 router.use(protect);
 
-router.get('/dashboard', getDashboardData);
+router.get('/dashboard', authorize('Super Admin', 'Admin'), getDashboardData);
 router.get('/notifications', getNotifications);
 router.put('/notifications/read-all', markNotificationRead);
 
 router.get('/audit-logs', authorize('Super Admin', 'Admin'), getAuditLogs);
 
 router.route('/settings')
-  .get(getSettings)
+  .get(authorize('Super Admin', 'Admin'), getSettings)
   .put(authorize('Super Admin', 'Admin'), updateSettings);
 
 module.exports = router;

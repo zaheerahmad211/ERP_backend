@@ -171,6 +171,11 @@ app.use(
 );
 
 app.use(
+  "/api/employee",
+  require("./routes/employeeRoutes")
+);
+
+app.use(
   "/api/products",
   require("./routes/productRoutes")
 );
@@ -210,9 +215,6 @@ app.use(
   require("./routes/systemRoutes")
 );
 
-// =====================================================
-// 404 HANDLER
-// =====================================================
 
 const {
   notFound,
