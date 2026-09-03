@@ -5,6 +5,42 @@ const generateToken = require('../utils/generateToken');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
 const { logAudit } = require('../middleware/auditLogger');
 
+const ensureEmployeeProfile = async (user) => {
+  if (user.role !== 'Employee') return null;
+
+  const existingEmployee = await Employee.findOne({
+    $or: [{ user: user._id }, { email: user.email }],
+  });
+  if (existingEmployee) {
+    if (!existingEmployee.user) {
+      existingEmployee.user = user._id;
+      await existingEmployee.save();
+    }
+    return existingEmployee;
+  }
+
+  const nameParts = user.name.trim().split(/\s+/);
+  const firstName = nameParts.shift() || user.name;
+  const lastName = nameParts.join(' ') || firstName;
+  const department = await Department.findOneAndUpdate(
+    { code: 'GEN' },
+    { name: 'General', code: 'GEN', description: 'Default employee department' },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  return Employee.create({
+    employeeId: `EMP-${user._id.toString().slice(-6).toUpperCase()}`,
+    user: user._id,
+    firstName,
+    lastName,
+    email: user.email,
+    phone: user.phone || '',
+    department: department._id,
+    designation: 'Employee',
+    salary: 0,
+  });
+};
+
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public / Admin
@@ -25,28 +61,7 @@ const register = async (req, res, next) => {
       role: 'Employee',
     });
 
-    if (user.role === 'Employee') {
-      const nameParts = name.trim().split(/\s+/);
-      const firstName = nameParts.shift() || name;
-      const lastName = nameParts.join(' ') || firstName;
-      const department = await Department.findOneAndUpdate(
-        { code: 'GEN' },
-        { name: 'General', code: 'GEN', description: 'Default employee department' },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
-      );
-
-      await Employee.create({
-        employeeId: `EMP-${user._id.toString().slice(-6).toUpperCase()}`,
-        user: user._id,
-        firstName,
-        lastName,
-        email: user.email,
-        phone: phone || '',
-        department: department._id,
-        designation: 'Employee',
-        salary: 0,
-      });
-    }
+    await ensureEmployeeProfile(user);
 
     const token = generateToken(user._id, user.role);
 
@@ -98,6 +113,8 @@ const login = async (req, res, next) => {
       return errorResponse(res, `Account is ${user.status.toLowerCase()}. Contact administrator.`, [], 403);
     }
 
+    await ensureEmployeeProfile(user);
+
     user.lastLogin = new Date();
     await user.save({ validateBeforeSave: false });
 
@@ -131,6 +148,7 @@ const login = async (req, res, next) => {
 const getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
+    await ensureEmployeeProfile(user);
     return successResponse(res, 'User profile retrieved', user);
   } catch (error) {
     next(error);
