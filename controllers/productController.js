@@ -213,7 +213,10 @@ const getWarehouses = async (req, res, next) => {
 const createWarehouse = async (req, res, next) => {
   try {
     const { name, code, location, manager, capacity } = req.body;
-    const warehouse = await Warehouse.create({ name, code, location, manager, capacity });
+    if (!name?.trim()) return errorResponse(res, 'Warehouse name is required.', [], 400);
+    if (!code?.trim()) return errorResponse(res, 'Warehouse code is required.', [], 400);
+    if (!location?.trim()) return errorResponse(res, 'Warehouse location is required.', [], 400);
+    const warehouse = await Warehouse.create({ name: name.trim(), code: code.trim().toUpperCase(), location: location.trim(), manager: manager || null, capacity: capacity || 10000 });
     return successResponse(res, 'Warehouse created', warehouse, 201);
   } catch (error) {
     next(error);
@@ -224,10 +227,20 @@ const transferStock = async (req, res, next) => {
   try {
     const { productId, fromWarehouseId, toWarehouseId, quantity, notes } = req.body;
 
+    if (!productId || !fromWarehouseId || !toWarehouseId) return errorResponse(res, 'Select a product, source warehouse, and destination warehouse.', [], 400);
+    if (fromWarehouseId === toWarehouseId) return errorResponse(res, 'Source and destination warehouses must be different.', [], 400);
+    if (!Number.isFinite(Number(quantity)) || Number(quantity) <= 0) return errorResponse(res, 'Transfer quantity must be greater than zero.', [], 400);
+
+    const [sourceWarehouse, destinationWarehouse] = await Promise.all([
+      Warehouse.findById(fromWarehouseId),
+      Warehouse.findById(toWarehouseId),
+    ]);
+    if (!sourceWarehouse || !destinationWarehouse) return errorResponse(res, 'Selected warehouse was not found.', [], 404);
+
     const product = await Product.findById(productId);
     if (!product) return errorResponse(res, 'Product not found', [], 404);
 
-    if (product.stockQuantity < quantity) {
+    if (product.stockQuantity < Number(quantity)) {
       return errorResponse(res, `Insufficient stock. Current stock is ${product.stockQuantity}`, [], 400);
     }
 
@@ -236,9 +249,9 @@ const transferStock = async (req, res, next) => {
       product: product._id,
       warehouse: fromWarehouseId,
       type: 'TRANSFER',
-      quantity,
+      quantity: Number(quantity),
       previousStock: product.stockQuantity,
-      currentStock: product.stockQuantity - quantity,
+      currentStock: product.stockQuantity - Number(quantity),
       reference: `Transfer to WH #${toWarehouseId}`,
       notes: notes || 'Stock Transfer',
       user: req.user._id,

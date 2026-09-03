@@ -37,10 +37,10 @@ router.route('/categories')
 // Warehouses
 router.route('/warehouses')
   .get(getWarehouses)
-  .post(authorize('Super Admin', 'Admin', 'Inventory Manager'), createWarehouse);
+  .post(authorize('Super Admin', 'Admin', 'Product Admin', 'Inventory Manager'), createWarehouse);
 
 // Inventory Transfers & Ledger
-router.post('/inventory/transfer', authorize('Super Admin', 'Admin', 'Inventory Manager'), transferStock);
+router.post('/inventory/transfer', authorize('Super Admin', 'Admin', 'Product Admin', 'Inventory Manager'), transferStock);
 router.get('/inventory/ledger', getInventoryLedger);
 
 module.exports = router;
