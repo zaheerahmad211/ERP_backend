@@ -76,6 +76,7 @@ const createProduct = async (req, res, next) => {
     if (!name?.trim()) return errorResponse(res, 'Product name is required.', [], 400);
     if (purchasePrice === undefined || purchasePrice === '') return errorResponse(res, 'Purchase price is required.', [], 400);
     if (sellingPrice === undefined || sellingPrice === '') return errorResponse(res, 'Selling price is required.', [], 400);
+    if (!Number.isFinite(Number(purchasePrice)) || !Number.isFinite(Number(sellingPrice))) return errorResponse(res, 'Prices must be valid numbers.', [], 400);
     if (Number(purchasePrice) < 0 || Number(sellingPrice) < 0) return errorResponse(res, 'Prices cannot be negative.', [], 400);
 
     const normalizedSKU = (sku || `SKU-${Date.now().toString().slice(-6)}`).trim().toUpperCase();
