@@ -32,6 +32,7 @@ const getEmployees = async (req, res, next) => {
     const total = await Employee.countDocuments(query);
     const employees = await Employee.find(query)
       .populate('department', 'name code')
+      .populate('user', 'avatar name role')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);

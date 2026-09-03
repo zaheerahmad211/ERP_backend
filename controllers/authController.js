@@ -12,8 +12,9 @@ const ensureEmployeeProfile = async (user) => {
     $or: [{ user: user._id }, { email: user.email }],
   });
   if (existingEmployee) {
-    if (!existingEmployee.user) {
+    if (!existingEmployee.user || existingEmployee.profilePhoto !== user.avatar) {
       existingEmployee.user = user._id;
+      existingEmployee.profilePhoto = user.avatar;
       await existingEmployee.save();
     }
     return existingEmployee;
@@ -168,6 +169,13 @@ const updateProfile = async (req, res, next) => {
     if (req.body.avatar) user.avatar = req.body.avatar;
 
     const updatedUser = await user.save();
+    if (updatedUser.role === 'Employee') {
+      await Employee.findOneAndUpdate(
+        { user: updatedUser._id },
+        { profilePhoto: updatedUser.avatar },
+        { new: true }
+      );
+    }
     return successResponse(res, 'Profile updated successfully', updatedUser);
   } catch (error) {
     next(error);
