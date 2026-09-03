@@ -5,6 +5,7 @@ const {
   getNotifications,
   markNotificationRead,
   getAuditLogs,
+  deleteAuditLog,
   getSettings,
   updateSettings,
 } = require('../controllers/systemController');
@@ -19,6 +20,7 @@ router.get('/notifications', getNotifications);
 router.put('/notifications/read-all', markNotificationRead);
 
 router.get('/audit-logs', authorize('Super Admin', 'Admin'), getAuditLogs);
+router.delete('/audit-logs/:id', authorize('Super Admin', 'Admin'), deleteAuditLog);
 
 router.route('/settings')
   .get(authorize('Super Admin', 'Admin'), getSettings)

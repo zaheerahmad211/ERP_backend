@@ -179,6 +179,17 @@ const getAuditLogs = async (req, res, next) => {
   }
 };
 
+const deleteAuditLog = async (req, res, next) => {
+  try {
+    const auditLog = await AuditLog.findByIdAndDelete(req.params.id);
+    if (!auditLog) return errorResponse(res, 'Audit log entry not found', [], 404);
+
+    return successResponse(res, 'Audit log entry deleted successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
 // ==========================================
 // SETTINGS
 // ==========================================
@@ -213,6 +224,7 @@ module.exports = {
   getNotifications,
   markNotificationRead,
   getAuditLogs,
+  deleteAuditLog,
   getSettings,
   updateSettings,
 };
