@@ -9,6 +9,11 @@ const productSchema = new mongoose.Schema(
       uppercase: true,
       trim: true,
     },
+    barcode: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     name: {
       type: String,
       required: true,
@@ -74,6 +79,6 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-productSchema.index({ name: 'text', sku: 'text', brand: 'text' });
+productSchema.index({ name: 'text', sku: 'text', brand: 'text', barcode: 'text' });
 
 module.exports = mongoose.model('Product', productSchema);

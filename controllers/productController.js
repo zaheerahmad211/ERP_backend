@@ -21,6 +21,7 @@ const getProducts = async (req, res, next) => {
         { name: { $regex: search, $options: 'i' } },
         { sku: { $regex: search, $options: 'i' } },
         { brand: { $regex: search, $options: 'i' } },
+        { barcode: { $regex: search, $options: 'i' } },
       ];
     }
     if (category) query.category = category;
@@ -59,6 +60,7 @@ const createProduct = async (req, res, next) => {
   try {
     const {
       sku,
+      barcode,
       name,
       description,
       category,
@@ -87,6 +89,7 @@ const createProduct = async (req, res, next) => {
 
     const product = await Product.create({
       sku: normalizedSKU,
+      barcode: barcode || '',
       name: name?.trim(),
       description,
       category: category || null,

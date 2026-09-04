@@ -157,6 +157,33 @@ const markNotificationRead = async (req, res, next) => {
   }
 };
 
+const broadcastNotification = async (req, res, next) => {
+  try {
+    const { title, message, type } = req.body;
+    
+    if (!title || !message) {
+      return errorResponse(res, 'Title and message are required', [], 400);
+    }
+
+    // Get all users
+    const users = await User.find({ status: 'Active' });
+    
+    // Create notification objects
+    const notifications = users.map(user => ({
+      user: user._id,
+      title,
+      message,
+      type: type || 'info'
+    }));
+    
+    await Notification.insertMany(notifications);
+
+    return successResponse(res, 'Broadcast notification sent to all active users successfully', { count: notifications.length });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // ==========================================
 // AUDIT LOGS
 // ==========================================
@@ -219,6 +246,30 @@ const updateSettings = async (req, res, next) => {
   }
 };
 
+// ==========================================
+// GLOBAL SEARCH
+// ==========================================
+const globalSearch = async (req, res, next) => {
+  try {
+    const { q } = req.query;
+    if (!q || q.trim().length < 2) {
+      return successResponse(res, 'Search requires at least 2 characters', { products: [], customers: [], orders: [] });
+    }
+
+    const regex = { $regex: q.trim(), $options: 'i' };
+
+    const [products, customers, orders] = await Promise.all([
+      Product.find({ $or: [{ name: regex }, { sku: regex }, { barcode: regex }] }).select('name sku barcode image').limit(5),
+      Customer.find({ $or: [{ name: regex }, { email: regex }, { company: regex }] }).select('name email company').limit(5),
+      SalesOrder.find({ orderNumber: regex }).select('orderNumber totalAmount orderStatus').limit(5),
+    ]);
+
+    return successResponse(res, 'Search results', { products, customers, orders });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getDashboardData,
   getNotifications,
@@ -227,4 +278,6 @@ module.exports = {
   deleteAuditLog,
   getSettings,
   updateSettings,
+  broadcastNotification,
+  globalSearch,
 };

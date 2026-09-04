@@ -8,6 +8,8 @@ const {
   deleteAuditLog,
   getSettings,
   updateSettings,
+  broadcastNotification,
+  globalSearch,
 } = require('../controllers/systemController');
 
 const { protect } = require('../middleware/authMiddleware');
@@ -16,8 +18,10 @@ const { authorize } = require('../middleware/roleMiddleware');
 router.use(protect);
 
 router.get('/dashboard', authorize('Super Admin', 'Admin'), getDashboardData);
+router.get('/search', globalSearch);
 router.get('/notifications', getNotifications);
 router.put('/notifications/read-all', markNotificationRead);
+router.post('/notifications/broadcast', authorize('Super Admin', 'Admin'), broadcastNotification);
 
 router.get('/audit-logs', authorize('Super Admin', 'Admin'), getAuditLogs);
 router.delete('/audit-logs/:id', authorize('Super Admin', 'Admin'), deleteAuditLog);
